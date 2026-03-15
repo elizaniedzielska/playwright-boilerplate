@@ -15,9 +15,11 @@ def test_navigation_to_blog_from_home(home_page: HomePage, blog_page: BlogPage) 
 
 @pytest.mark.blog
 def test_blog_contains_cat_gif(blog_page: BlogPage) -> None:
-    blog_page.open_known_gif_article()
-    gif = blog_page.gif_image()
-    assert gif.count() > 0, "Expected at least one GIF image on the blog subpage."
+    blog_page.open_blog()
+    blog_page.expect_blog_loaded()
 
-    source = gif.get_attribute("src") or ""
-    assert ".gif" in source.lower() or "giphy" in source.lower()
+    hero_video = blog_page.hero_cat_video()
+    assert hero_video.count() > 0, "Expected cat hero media on /blog."
+
+    source = blog_page.wait_for_hero_media_source()
+    assert "blog.mp4" in source.lower() or "blog.webm" in source.lower()
