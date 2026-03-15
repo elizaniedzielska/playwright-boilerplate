@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 
 import pytest
-from playwright.sync_api import Browser, BrowserContext, Page, Playwright, sync_playwright
+from playwright.sync_api import Page
 
 from src.pages.blog_page import BlogPage
 from src.pages.home_page import HomePage
@@ -27,38 +27,15 @@ def base_url() -> str:
     return os.getenv("BASE_URL", "https://widelab.co")
 
 
-@pytest.fixture(scope="session")
-def playwright_instance() -> Playwright:
-    with sync_playwright() as playwright:
-        yield playwright
-
-
-@pytest.fixture(scope="session")
-def browser(playwright_instance: Playwright) -> Browser:
-    browser = playwright_instance.chromium.launch(headless=True)
-    yield browser
-    browser.close()
-
-
-@pytest.fixture()
-def context(browser: Browser) -> BrowserContext:
-    context = browser.new_context()
-    yield context
-    context.close()
-
-
-@pytest.fixture()
-def page(context: BrowserContext, request: pytest.FixtureRequest) -> Page:
-    page = context.new_page()
-    yield page
-
+@pytest.fixture(autouse=True)
+def screenshot_on_failure(page: Page, request: pytest.FixtureRequest) -> None:
+    yield
     report = getattr(request.node, "rep_call", None)
     if report and report.failed:
         screenshots_dir = Path("artifacts") / "screenshots"
         screenshots_dir.mkdir(parents=True, exist_ok=True)
         file_name = f"{request.node.name}.png".replace("/", "_").replace("\\", "_")
         page.screenshot(path=str(screenshots_dir / file_name), full_page=True)
-    page.close()
 
 
 @pytest.fixture()
